@@ -100,7 +100,7 @@ func (c *CronJobHPA) Run() error {
 			return fmt.Errorf("failed to scale %s %s in %s namespace to %d after retrying %d times and exit", c.TargetRef.RefKind, c.TargetRef.RefName, c.TargetRef.RefNamespace, c.DesiredSize, times)
 		}
 
-		if err := c.ScalePlainRef(); err == nil {
+		if err := c.scheduledScaling(); err == nil {
 			break
 		}
 
@@ -110,7 +110,7 @@ func (c *CronJobHPA) Run() error {
 	return nil
 }
 
-func (c *CronJobHPA) ScalePlainRef() error {
+func (c *CronJobHPA) scheduledScaling() error {
 	var scale *autoscalingapi.Scale
 	var resource schema.GroupResource
 

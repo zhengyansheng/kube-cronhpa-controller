@@ -25,7 +25,7 @@ import (
 )
 
 var ErrJobType = errors.New("job type error")
-var NoNeedUpdate = errors.New("NoNeedUpdate")
+var NoNeedUpdate = errors.New("no need update")
 
 const MaxRetryTimes = 3
 
@@ -36,7 +36,7 @@ type CronManager struct {
 	cronExecutor  CronExecutor
 	mapper        meta.RESTMapper
 	scaler        scale.ScalesGetter
-	eventRecorder record.EventRecorder
+	eventRecorder record.EventRecorder // 记录event事件
 }
 
 func (cm *CronManager) Run(stopCh <-chan struct{}) {
@@ -44,38 +44,6 @@ func (cm *CronManager) Run(stopCh <-chan struct{}) {
 	defer cm.cronExecutor.Stop()
 	<-stopCh
 
-}
-
-func (cm *CronManager) createOrUpdate(job CronJob) error {
-	value, ok := cm.jobQueue.Load(job.ID())
-	if !ok {
-		// if job not exist, create it
-		if err := cm.cronExecutor.AddJob(job); err != nil {
-			return err
-		}
-
-		// add job to queue
-		cm.jobQueue.Store(job.ID(), job)
-
-		return nil
-	}
-
-	j, ok := value.(*CronJobHPA)
-	if !ok {
-		return ErrJobType
-	}
-	if ok := j.Equals(job); !ok {
-		// 如果job存在，但是job内容发生变化，更新job
-		if err := cm.cronExecutor.Update(job); err != nil {
-			return err
-		}
-
-		// add job to queue
-		cm.jobQueue.Store(job.ID(), job)
-		return nil
-
-	}
-	return NoNeedUpdate
 }
 
 func (cm *CronManager) JobResultHandler(j *cron.JobResult) {
@@ -138,6 +106,38 @@ func (cm *CronManager) JobResultHandler(j *cron.JobResult) {
 		return
 	}
 	cm.eventRecorder.Event(instance, v1.EventTypeNormal, string(autoscalingv1.Succeed), "Patch cron hpa status successfully")
+}
+
+func (cm *CronManager) createOrUpdate(job CronJob) error {
+	value, ok := cm.jobQueue.Load(job.ID())
+	if !ok {
+		// if job not exist, create it
+		if err := cm.cronExecutor.AddJob(job); err != nil {
+			return err
+		}
+
+		// add job to queue
+		cm.jobQueue.Store(job.ID(), job)
+
+		return nil
+	}
+
+	j, ok := value.(*CronJobHPA)
+	if !ok {
+		return ErrJobType
+	}
+	if ok := j.Equals(job); !ok {
+		// 如果job存在，但是job内容发生变化，更新job
+		if err := cm.cronExecutor.Update(job); err != nil {
+			return err
+		}
+
+		// add job to queue
+		cm.jobQueue.Store(job.ID(), job)
+		return nil
+
+	}
+	return NoNeedUpdate
 }
 
 func (cm *CronManager) delete(id string) error {

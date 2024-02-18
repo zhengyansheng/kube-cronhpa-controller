@@ -35,6 +35,8 @@ func (c cronHPAExecutor) Stop() {
 	c.Engine.Stop()
 }
 
+// AddJob adds a Job to the Cron to be run on the given schedule.
+// 添加一个Job到Cron entries map
 func (c cronHPAExecutor) AddJob(job CronJob) error {
 	return c.Engine.AddJob(job.SchedulePlan(), job)
 }
@@ -44,6 +46,8 @@ func (c cronHPAExecutor) Update(job CronJob) error {
 	return c.AddJob(job)
 }
 
+// RemoveJob removes a job from the cron
+// 删除一个Job从Cron entries map
 func (c cronHPAExecutor) RemoveJob(job CronJob) error {
 	c.Engine.RemoveJob(job.ID())
 	return nil

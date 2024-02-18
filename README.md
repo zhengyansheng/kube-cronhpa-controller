@@ -1,6 +1,8 @@
 # kube-cronhpa-controller
 // TODO(user): Add simple overview of use/purpose
 
+[cron hpa controller 逻辑](./images/kube-cronhpa-controller.png)
+
 ## Description
 // TODO(user): An in-depth paragraph about your project and overview of use
 

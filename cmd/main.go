@@ -127,7 +127,6 @@ func main() {
 	cm := controller.NewCronManager(mgr.GetConfig(), mgr.GetClient(), mgr.GetEventRecorderFor("CronHorizontalPodAutoscaler"))
 	go func(cronManager *controller.CronManager, stopChan chan struct{}) {
 		cm.Run(stopChan)
-		<-stopChan
 	}(cm, stopChan)
 
 	// 启动 web server
